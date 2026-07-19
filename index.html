@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Neural-OCR System</title>
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="ocr.css">
+	<script src="ocr.js" defer></script>
+</head>
+
+<body onload="ocrDemo.onLoadFunction()">
+	<main class="app-container">
+		<header class="app-header">
+			<div class="brand-lockup">
+				<div class="brand-text">
+					<h1>Neural-OCR System</h1>
+					<p class="subtext">a neural network trained to read handwriting</p>
+				</div>
+			</div>
+			<div class="header-status">
+				<span id="connection-status" class="status-badge offline"><span class="status-dot"></span>Offline</span>
+			</div>
+		</header>
+
+		<div class="top-section">
+			<section class="left-col">
+				<div class="canvas-container">
+					<canvas id="canvas" width="200" height="200"></canvas>
+				</div>
+
+				<form name="input" class="controls">
+					<div class="input-group">
+						<label for="digit">Digit:</label>
+						<input id="digit" type="text" aria-label="Enter actual digit value">
+					</div>
+					<div class="button-group">
+						<button type="button" class="btn-secondary" onclick="ocrDemo.train()">Train</button>
+						<button type="button" class="btn-primary" onclick="ocrDemo.test()">Test</button>
+						<button type="button" class="btn-secondary" onclick="ocrDemo.resetCanvas()">Reset</button>
+					</div>
+				</form>
+			</section>
+
+			<section class="right-col">
+				<header class="panel-header">
+					<h2>Network Output</h2>
+					<span id="predicted-winner" class="winner-label"></span>
+				</header>
+				<div id="output-bars" class="output-panel">
+					<div class="bar-row" id="bar-row-0"><span class="bar-label">0</span><div class="bar-track"><div class="bar-fill" id="bar-fill-0"></div></div></div>
+					<div class="bar-row" id="bar-row-1"><span class="bar-label">1</span><div class="bar-track"><div class="bar-fill" id="bar-fill-1"></div></div></div>
+					<div class="bar-row" id="bar-row-2"><span class="bar-label">2</span><div class="bar-track"><div class="bar-fill" id="bar-fill-2"></div></div></div>
+					<div class="bar-row" id="bar-row-3"><span class="bar-label">3</span><div class="bar-track"><div class="bar-fill" id="bar-fill-3"></div></div></div>
+					<div class="bar-row" id="bar-row-4"><span class="bar-label">4</span><div class="bar-track"><div class="bar-fill" id="bar-fill-4"></div></div></div>
+					<div class="bar-row" id="bar-row-5"><span class="bar-label">5</span><div class="bar-track"><div class="bar-fill" id="bar-fill-5"></div></div></div>
+					<div class="bar-row" id="bar-row-6"><span class="bar-label">6</span><div class="bar-track"><div class="bar-fill" id="bar-fill-6"></div></div></div>
+					<div class="bar-row" id="bar-row-7"><span class="bar-label">7</span><div class="bar-track"><div class="bar-fill" id="bar-fill-7"></div></div></div>
+					<div class="bar-row" id="bar-row-8"><span class="bar-label">8</span><div class="bar-track"><div class="bar-fill" id="bar-fill-8"></div></div></div>
+					<div class="bar-row" id="bar-row-9"><span class="bar-label">9</span><div class="bar-track"><div class="bar-fill" id="bar-fill-9"></div></div></div>
+				</div>
+			</section>
+		</div>
+
+		<section class="bottom-section">
+			<header class="panel-header">
+				<h2>Activity Log</h2>
+			</header>
+			<div id="activity-log" class="log-panel">
+				<!-- Log entries added dynamically -->
+			</div>
+		</section>
+	</main>
+</body>
+
+</html>

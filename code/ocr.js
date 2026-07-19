@@ -16,8 +16,12 @@ var ocrDemo = {
     PIXEL_WIDTH: 10, // TRANSLATED_WIDTH = CANVAS_WIDTH / PIXEL_WIDTH
     BATCH_SIZE: 1,
 
-    // Server URL - uses relative path so it works both locally and on Vercel
-    API_URL: "/api/",
+    // Auto-detect environment: use local server when running locally, /api/ on Vercel
+    API_URL: (window.location.hostname === 'localhost' ||
+              window.location.hostname === '127.0.0.1' ||
+              window.location.hostname === '')   // file:// opened directly
+        ? 'http://localhost:8000'
+        : '/api/',
 
     // Visual Colors (Data model remains 0=bg, 1=stroke)
     BG_COLOR: "#12172B",     // --canvas-bg
@@ -28,17 +32,17 @@ var ocrDemo = {
     trainingRequestCount: 0,
     isTrainInProgress: false,
 
-    onLoadFunction: function() {
+    onLoadFunction: function () {
         this.resetCanvas();
         this.logActivity("System initialized. Ready for input.");
         this.pingServer();
     },
 
-    pingServer: function() {
+    pingServer: function () {
         var self = this;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', this.API_URL, true);
-        xhr.onload = function() {
+        xhr.onload = function () {
             if (xhr.status === 200) {
                 self.updateConnectionStatus("connected");
                 self.logActivity("Server connected.", "success");
@@ -46,11 +50,11 @@ var ocrDemo = {
                 self.updateConnectionStatus("offline");
             }
         };
-        xhr.onerror = function() { self.updateConnectionStatus("offline"); };
+        xhr.onerror = function () { self.updateConnectionStatus("offline"); };
         xhr.send();
     },
 
-    resetCanvas: function() {
+    resetCanvas: function () {
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
 
@@ -61,14 +65,14 @@ var ocrDemo = {
         while (matrixSize--) this.data.push(0);
         this.drawGrid(ctx);
 
-        canvas.onmousemove = function(e) { this.onMouseMove(e, ctx, canvas) }.bind(this);
-        canvas.onmousedown = function(e) { this.onMouseDown(e, ctx, canvas) }.bind(this);
-        canvas.onmouseup = function(e) { this.onMouseUp(e, canvas) }.bind(this);
+        canvas.onmousemove = function (e) { this.onMouseMove(e, ctx, canvas) }.bind(this);
+        canvas.onmousedown = function (e) { this.onMouseDown(e, ctx, canvas) }.bind(this);
+        canvas.onmouseup = function (e) { this.onMouseUp(e, canvas) }.bind(this);
 
         this.resetNetworkOutput();
     },
 
-    drawGrid: function(ctx) {
+    drawGrid: function (ctx) {
         for (var x = this.PIXEL_WIDTH, y = this.PIXEL_WIDTH; x < this.CANVAS_WIDTH; x += this.PIXEL_WIDTH, y += this.PIXEL_WIDTH) {
             ctx.strokeStyle = this.GRID_COLOR;
             ctx.beginPath();
@@ -83,44 +87,44 @@ var ocrDemo = {
         }
     },
 
-    onMouseMove: function(e, ctx, canvas) {
+    onMouseMove: function (e, ctx, canvas) {
         if (!canvas.isDrawing) {
             return;
         }
         this.fillSquare(ctx, e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
     },
 
-    onMouseDown: function(e, ctx, canvas) {
+    onMouseDown: function (e, ctx, canvas) {
         canvas.isDrawing = true;
         canvas.parentElement.classList.add('drawing');
         this.fillSquare(ctx, e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
     },
 
-    onMouseUp: function(e, canvas) {
+    onMouseUp: function (e, canvas) {
         canvas.isDrawing = false;
         canvas.parentElement.classList.remove('drawing');
     },
 
-    fillSquare: function(ctx, x, y) {
+    fillSquare: function (ctx, x, y) {
         var xPixel = Math.floor(x / this.PIXEL_WIDTH);
         var yPixel = Math.floor(y / this.PIXEL_WIDTH);
         if (xPixel < 0 || xPixel >= this.TRANSLATED_WIDTH || yPixel < 0 || yPixel >= this.TRANSLATED_WIDTH) {
             return;
         }
         // Underlying data model expects 1 for ink, 0 for background
-        this.data[((xPixel - 1)  * this.TRANSLATED_WIDTH + yPixel) - 1] = 1;
+        this.data[((xPixel - 1) * this.TRANSLATED_WIDTH + yPixel) - 1] = 1;
 
         ctx.fillStyle = this.STROKE_COLOR;
         ctx.fillRect(xPixel * this.PIXEL_WIDTH, yPixel * this.PIXEL_WIDTH, this.PIXEL_WIDTH, this.PIXEL_WIDTH);
     },
 
-    train: function() {
+    train: function () {
         var digitVal = document.getElementById("digit").value;
         if (!digitVal || this.data.indexOf(1) < 0) {
             this.logActivity("Validation failed: Please type and draw a digit value in order to train.", "error");
             return;
         }
-        this.trainArray.push({"y0": this.data, "label": parseInt(digitVal)});
+        this.trainArray.push({ "y0": this.data, "label": parseInt(digitVal) });
         this.trainingRequestCount++;
 
         // Time to send a training batch to the server.
@@ -137,7 +141,7 @@ var ocrDemo = {
         }
     },
 
-    test: function() {
+    test: function () {
         if (this.data.indexOf(1) < 0) {
             this.logActivity("Validation failed: Please draw a digit in order to test.", "error");
             return;
@@ -150,14 +154,14 @@ var ocrDemo = {
         this.sendData(json);
     },
 
-    receiveResponse: function(xmlHttp) {
+    receiveResponse: function (xmlHttp) {
         if (xmlHttp.status != 200) {
             this.updateConnectionStatus("offline");
             var errorMsg = xmlHttp.statusText;
             try {
                 var responseJSON = JSON.parse(xmlHttp.responseText);
                 if (responseJSON.message) errorMsg = responseJSON.message;
-            } catch(e) {}
+            } catch (e) { }
             this.logActivity("Server Error (" + xmlHttp.status + "): " + errorMsg, "error");
             return;
         }
@@ -173,7 +177,7 @@ var ocrDemo = {
                 } else if (this.isTrainInProgress) {
                     this.logActivity("Training successful. Weights saved.", "success");
                 }
-            } catch(e) {
+            } catch (e) {
                 this.logActivity("Failed to parse response: " + xmlHttp.responseText, "error");
             }
         } else {
@@ -184,23 +188,23 @@ var ocrDemo = {
         this.isTrainInProgress = false;
     },
 
-    onError: function(xmlHttp) {
+    onError: function (xmlHttp) {
         this.updateConnectionStatus("offline");
         this.logActivity("Error occurred while connecting to server: " + xmlHttp.statusText, "error");
     },
 
-    sendData: function(json) {
+    sendData: function (json) {
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.open('POST', this.API_URL, true);
-        xmlHttp.onload = function() { this.receiveResponse(xmlHttp); }.bind(this);
-        xmlHttp.onerror = function() { this.onError(xmlHttp) }.bind(this);
+        xmlHttp.onload = function () { this.receiveResponse(xmlHttp); }.bind(this);
+        xmlHttp.onerror = function () { this.onError(xmlHttp) }.bind(this);
         var msg = JSON.stringify(json);
         xmlHttp.setRequestHeader('Content-length', msg.length);
         xmlHttp.setRequestHeader("Connection", "close");
         xmlHttp.send(msg);
     },
 
-    logActivity: function(message, type) {
+    logActivity: function (message, type) {
         var logContainer = document.getElementById("activity-log");
         if (!logContainer) return;
 
@@ -210,9 +214,9 @@ var ocrDemo = {
         var timeSpan = document.createElement("span");
         timeSpan.className = "log-time";
         var now = new Date();
-        timeSpan.textContent = now.getHours().toString().padStart(2, '0') + ":" + 
-                               now.getMinutes().toString().padStart(2, '0') + ":" + 
-                               now.getSeconds().toString().padStart(2, '0');
+        timeSpan.textContent = now.getHours().toString().padStart(2, '0') + ":" +
+            now.getMinutes().toString().padStart(2, '0') + ":" +
+            now.getSeconds().toString().padStart(2, '0');
 
         var msgSpan = document.createElement("span");
         msgSpan.className = "log-msg";
@@ -220,11 +224,11 @@ var ocrDemo = {
 
         entry.appendChild(timeSpan);
         entry.appendChild(msgSpan);
-        
+
         logContainer.insertBefore(entry, logContainer.firstChild);
     },
 
-    resetNetworkOutput: function() {
+    resetNetworkOutput: function () {
         for (var i = 0; i <= 9; i++) {
             var row = document.getElementById("bar-row-" + i);
             var fill = document.getElementById("bar-fill-" + i);
@@ -238,9 +242,9 @@ var ocrDemo = {
         if (label) label.textContent = "";
     },
 
-    updateNetworkOutput: function(winningDigit) {
+    updateNetworkOutput: function (winningDigit) {
         this.resetNetworkOutput();
-        
+
         var label = document.getElementById("predicted-winner");
         if (label) label.textContent = "Predicted: " + winningDigit;
 
@@ -248,7 +252,7 @@ var ocrDemo = {
             var row = document.getElementById("bar-row-" + i);
             var fill = document.getElementById("bar-fill-" + i);
             if (row) row.classList.add("active");
-            
+
             if (i === winningDigit) {
                 if (row) row.classList.add("winner");
                 if (fill) fill.style.width = "100%";
@@ -258,7 +262,7 @@ var ocrDemo = {
         }
     },
 
-    updateConnectionStatus: function(status) {
+    updateConnectionStatus: function (status) {
         var badge = document.getElementById("connection-status");
         if (!badge) return;
         if (status === "connected") {

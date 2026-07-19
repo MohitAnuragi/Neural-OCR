@@ -1,0 +1,8 @@
+# Ignore large training data files - not needed for prediction in production
+code/data.csv
+code/dataLabels.csv
+code/neural_network_design.py
+code/nn.json.bak
+code/__pycache__
+venv
+dataset

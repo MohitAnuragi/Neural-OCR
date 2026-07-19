@@ -16,9 +16,8 @@ var ocrDemo = {
     PIXEL_WIDTH: 10, // TRANSLATED_WIDTH = CANVAS_WIDTH / PIXEL_WIDTH
     BATCH_SIZE: 1,
 
-    // Server Variables
-    PORT: "8000",
-    HOST: "http://localhost",
+    // Server URL - uses relative path so it works both locally and on Vercel
+    API_URL: "/api/",
 
     // Visual Colors (Data model remains 0=bg, 1=stroke)
     BG_COLOR: "#12172B",     // --canvas-bg
@@ -32,6 +31,23 @@ var ocrDemo = {
     onLoadFunction: function() {
         this.resetCanvas();
         this.logActivity("System initialized. Ready for input.");
+        this.pingServer();
+    },
+
+    pingServer: function() {
+        var self = this;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', this.API_URL, true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                self.updateConnectionStatus("connected");
+                self.logActivity("Server connected.", "success");
+            } else {
+                self.updateConnectionStatus("offline");
+            }
+        };
+        xhr.onerror = function() { self.updateConnectionStatus("offline"); };
+        xhr.send();
     },
 
     resetCanvas: function() {
@@ -175,7 +191,7 @@ var ocrDemo = {
 
     sendData: function(json) {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open('POST', this.HOST + ":" + this.PORT, true);
+        xmlHttp.open('POST', this.API_URL, true);
         xmlHttp.onload = function() { this.receiveResponse(xmlHttp); }.bind(this);
         xmlHttp.onerror = function() { this.onError(xmlHttp) }.bind(this);
         var msg = JSON.stringify(json);
